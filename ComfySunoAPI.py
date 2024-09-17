@@ -13,6 +13,7 @@ class SunoGenerate:
 
     make_instrumental = False
     wait_audio = True
+    model = "chirp-v3-5|chirp-v3-0"
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -22,6 +23,9 @@ class SunoGenerate:
                 "make_instrumental": ("BOOLEAN", {"default": cls.make_instrumental}),
                 "wait_audio": ("BOOLEAN", {"default": cls.wait_audio}),
                 "prompt": ("STRING", {"multiline": True}),
+                "tags": ("STRING", {"multiline": False}),
+                "title": ("STRING", {"multiline": False}),
+                "model": ("STRING", {"default": cls.model, "multiline": False}),
             },
             "optional": {
                 "username": ("STRING", {"default": "admin", "forceInput": True}),
@@ -49,7 +53,7 @@ class SunoGenerate:
         return  response.json()
 
 
-    def generate(self, base_url, username, password, make_instrumental, wait_audio, prompt):
+    def generate(self, base_url, username, password, make_instrumental, wait_audio, prompt, tags, title, model):
         if prompt is None:
             raise ValueError("Prompt is required")
 
@@ -63,6 +67,9 @@ class SunoGenerate:
             "prompt": prompt,
             "make_instrumental": make_instrumental,
             "wait_audio": wait_audio,
+            "tags": tags,
+            "title": title,
+            "model": model,
         }
 
         response = requests.post(url, headers=headers, json=payload)

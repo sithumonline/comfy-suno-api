@@ -72,8 +72,12 @@ class SunoGenerate:
             "model": model,
         }
 
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logging.error(f"[Suno] Request failed: {e}")
+            return None, None, None
 
         response_json = response.json()
 
@@ -98,13 +102,22 @@ class SunoGenerate:
         logging.info(f"[Suno] Generated audio with ids: {ids}")
 
         for _ in range(10):
-            audio_information = self.get_audio_information(",".join(ids), base_url, username, password)
-            if all([audio["status"] == "streaming" for audio in audio_information]):
-                break
+            try:
+                audio_information = self.get_audio_information(",".join(ids), base_url, username, password)
+                if all([audio["status"] == "streaming" for audio in audio_information]):
+                    break
+            except Exception as e:
+                logging.error(f"[Suno] Failed to get audio information: {e}")
             time.sleep(6)
-            
-        audio_urls = [audio["audio_url"] for audio in audio_information]
+        else:
+            logging.error(f"[Suno] Failed to get audio information after 10 attempts")
+            return None, None, response_json
+
+        try:
+            audio_urls = [audio["audio_url"] for audio in audio_information]
+        except KeyError as e:
+            logging.error(f"[Suno] Missing 'audio_url' in audio information: {e}")
+            return None, None, response_json
 
         return audio_urls[0], audio_urls[1], response_json
                         
-            
